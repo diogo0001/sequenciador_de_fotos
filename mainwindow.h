@@ -29,8 +29,7 @@ private:
     QProcess *process;
     QString dateFilePath;
     QString toolPath;
-
-    QString getNewDate(int folderCount);
+    QStringList tmpFolders;
 
 };
 

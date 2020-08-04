@@ -15,10 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-//    ui->btnProcess->setEnabled(false);
+    ui->btnProcess->setEnabled(false);
     ui->lineEdit->setReadOnly(true);
     process = new QProcess();
-
 }
 
 MainWindow::~MainWindow()
@@ -42,7 +41,7 @@ int MainWindow::runCmd(QString cmd, QString dirNum)
             splitData = outputStdOut.split('/');
             outputStdOut = splitData.at(splitData.size()-1);
             qDebug()<<"outputStdOut :"<<outputStdOut;
-            ui->status->setText("Status: \nDir "+dirNum+": "+outputStdOut);
+            ui->status->setText("Status: \nDir: " +outputStdOut);
         }
 
 //        QCoreApplication::processEvents();
@@ -79,61 +78,81 @@ void MainWindow::on_btnDirectory_clicked()
         folderPath = QDir::toNativeSeparators(folderPath + "/");
         qDebug()<<"folderPath: "<<folderPath;
 
+        tmpFolders = QDir(folderPath).entryList(QDir::Dirs);
+
+        if(tmpFolders.size()<=2){
+            ui->btnProcess->setEnabled(false);
+            QMessageBox::critical(this, tr("Aviso"), tr("A pasta selecionada deve conter as subpastas com as fotos!"));
+        }else if(tmpFolders.size()==3){
+            ui->btnProcess->setEnabled(false);
+            QMessageBox::critical(this, tr("Aviso"), tr("A pasta selecionada deve conter mais de 1 subpasta com as fotos!"));
+        }
+        else{
+                ui->btnProcess->setEnabled(true);
+        }
     }
     else{
         QMessageBox::critical(this, tr("Aviso"), tr("Nenhuma pasta selecionada!"));
+        ui->btnProcess->setEnabled(false);
     }
-
 }
 
 void MainWindow::on_btnProcess_clicked()
 {
-    qDebug()<<"Processando";
 
-
-//    folderPath =  "C:\\Users\\kulie\\Documents\\HORUS\\HOME_OFFICE\\UPA_HOME_OFFICE\\Foxtek_sequencer\\build-Sequenciador_de_fotos-Desktop_Qt_5_12_0_MinGW_64_bit-Release\\teste_fotos\\3\\";
-
-    QDir dir(folderPath);
     QString cmd;
-    int folderCount = 1;
+    int folderCount = 0;
     QString timeInfo;
-//    QString tempFolder;
+    QStringList fileList;
+    QString folder;
 
-    // Fazer a varredura das pastas
-//    tempFolder = "";
-
-
-    // Em cada pasta processar as fotos
     QStringList filter;
     filter << QLatin1String("*.png");
     filter << QLatin1String("*.jpeg");
     filter << QLatin1String("*.jpg");
-    dir.setNameFilters(filter);
-    filelistinfo = dir.entryInfoList();
-    QStringList fileList;
 
 
-    QString imageFile = folderPath+"*.jpg";
-    QString folderCountStr = QString::number(folderCount);
+//     for (QString folder : tmpFolders) {
+       for(int i=3; i<tmpFolders.size(); i++){
 
-    if(folderCount<10){
-        timeInfo = "0000:00:0"+folderCountStr+" 00:00:00"; // fazer pelo dia
-    }
-    else{
-        timeInfo = "0000:00:"+folderCountStr+" 00:00:00"; // fazer pelo dia
-    }
+        folderCount += 1;
+        folder = tmpFolders.at(i);
+
+        qDebug()<<"Folder :"<<folderPath+folder;
+        qDebug()<<"FolderCount :"<<folderCount;
+
+        QDir dir(folderPath+folder);
+        dir.setNameFilters(filter);
+        filelistinfo = dir.entryInfoList();
 
 
-    // adiciona timeInfo na data original
-    cmd = QStringLiteral("\"%1exiftool\" -v0 -overwrite_original -alldates+=\"%2\" %3").arg(toolPath).arg(timeInfo).arg(imageFile);
+        QString imageFile = folderPath+folder+"\\*.jpg";
 
-    if(runCmd(cmd,folderCountStr)){
-         qDebug()<<"Falha no cmd";
-    }
-    else{
-        qDebug()<<"Executou o cmd";
+        QString folderCountStr = QString::number(folderCount);
 
-    }
+        if(folderCount<10){
+            timeInfo = "0000:00:0"+folderCountStr+" 00:00:00"; // fazer pelo dia
+        }
+        else{
+            timeInfo = "0000:00:"+folderCountStr+" 00:00:00"; // fazer pelo dia
+        }
+
+        qDebug()<<"imageFile: "<< imageFile;
+        qDebug()<<"timeInfo: "<<timeInfo;
+
+
+        // adiciona timeInfo na data original
+        cmd = QStringLiteral("\"%1exiftool\" -v0 -overwrite_original -alldates+=\"%2\" %3").arg(toolPath).arg(timeInfo).arg(imageFile);
+
+        if(runCmd(cmd,folderCountStr)){
+             qDebug()<<"Falha no cmd";
+        }
+        else{
+            qDebug()<<"Executou o cmd";
+
+        }
+
+     }
 }
 
 
