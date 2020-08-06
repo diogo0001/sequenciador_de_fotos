@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QFileInfoList>
 #include <QProcess>
+#include <QLineEdit>
 
 namespace Ui {
 class MainWindow;
@@ -27,9 +28,10 @@ private:
     QString folderPath;
     QFileInfoList filelistinfo;
     QProcess *process;
-    QString dateFilePath;
+    QString finalStatus;
     QString toolPath;
     QStringList tmpFolders;
+    QLineEdit *folderField;
 
 };
 
